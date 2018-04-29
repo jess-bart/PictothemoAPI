@@ -147,10 +147,11 @@ public class PictureDao extends BaseDao
     try {
       UserDao dao = new UserDao();
       dao.setMessageSource(messageSource);
-      dao.checkToken(request);
+      User user = dao.checkToken(request);
       
       Picture picture = new Picture();
       picture.setId(id);
+      picture.setUser(user);
       
       session.remove(picture);
       tx.commit();
@@ -196,34 +197,25 @@ public class PictureDao extends BaseDao
     int extIndex = file.getOriginalFilename().lastIndexOf('.');
     if ((extIndex == -1) || (isExtensionAllowed(file.getOriginalFilename().substring(extIndex))))
       throw new PictothemoError(ErrorCode.UNSUPPORTED_FORMAT, getMessage("error.format_not_allowed"));
-    if (file.getSize() > 41943040L) {
+    if (file.getSize() > 41943040L)
       throw new PictothemoError(ErrorCode.FILE_TOO_BIG, getMessage("error.file_too_big"));
-    }
+    
     Session session = sessionFactory.openSession();
     Transaction tx = session.beginTransaction();
     try
     {
       Calendar tomorrow = Calendar.getInstance();
-      tomorrow.add(5, 1);
-      tomorrow.set(11, 0);
-      tomorrow.set(12, 0);
-      tomorrow.set(13, 0);
-      tomorrow.set(14, 0);
-      
-      System.out.println(Calendar.DATE);
-		System.out.println(Calendar.DAY_OF_MONTH);
-		System.out.println(Calendar.DAY_OF_WEEK);
-		System.out.println(Calendar.DAY_OF_WEEK_IN_MONTH);
-		System.out.println(Calendar.DAY_OF_YEAR);
-		System.out.println(Calendar.MINUTE);
-		System.out.println(Calendar.HOUR);
-		System.out.println(Calendar.SECOND);
-      
+      tomorrow.add(Calendar.DATE, 1);
+      tomorrow.set(Calendar.HOUR, 0);
+      tomorrow.set(Calendar.MINUTE, 0);
+      tomorrow.set(Calendar.SECOND, 0);
+      tomorrow.set(Calendar.MILLISECOND, 0);
+         
       List<Picture> picturesToRemove = getUserCandidatePicture(tomorrow.getTime(), user.getId());
       
-      if (picturesToRemove.size() > 0) {
+      if (picturesToRemove.size() > 0)
         cleanUserPictures(picturesToRemove, user.getId(), tomorrow);
-      }
+      
       ThemeDao themeDao = new ThemeDao();
       themeDao.setMessageSource(messageSource);
       Theme theme = themeDao.getThemeByDate(tomorrow.getTime());

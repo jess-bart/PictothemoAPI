@@ -32,16 +32,6 @@ public class Trophy
   private String description;
   @Column(name="validated", insertable=false, updatable=false)
   private boolean validated;
-  @OneToMany(fetch=FetchType.LAZY)
-  @JoinColumn(name="code", referencedColumnName="title")
-  @MapKey(name="locale")
-  @Fetch(FetchMode.JOIN)
-  private Map<String, Translation> titles;
-  @OneToMany(fetch=FetchType.LAZY)
-  @JoinColumn(name="code", referencedColumnName="description")
-  @MapKey(name="locale")
-  @Fetch(FetchMode.JOIN)
-  private Map<String, Translation> descriptions;
   
   public int getId()
   {
@@ -55,12 +45,12 @@ public class Trophy
   
   public String getTitle()
   {
-    return TranslationDao.getTranslation(this.titles);
+    return this.title;
   }
   
   public String getDescription()
   {
-    return TranslationDao.getTranslation(this.descriptions);
+    return this.description;
   }
   
   public void setDescription(String description)

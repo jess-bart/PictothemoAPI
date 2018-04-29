@@ -44,15 +44,15 @@ public class Picture
   @OneToMany(fetch=FetchType.LAZY, cascade={CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval=true)
   @JoinColumn(name="picture_id", updatable=false)
   private Set<Comment> comments;
-  @OneToMany(fetch=FetchType.LAZY, cascade={CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-  @JoinColumns({@JoinColumn(name="picture_id", referencedColumnName="id")})
+  @OneToMany(fetch=FetchType.LAZY, cascade={CascadeType.REMOVE}, orphanRemoval = true)
+  @JoinColumns({@JoinColumn(name="picture_id", referencedColumnName="id", updatable = false)})
   @Where(clause="positive = 1")
   private Set<PictureVote> positives;
-  @OneToMany(fetch=FetchType.LAZY, cascade={CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-  @JoinColumns({@JoinColumn(name="picture_id", referencedColumnName="id")})
+  @OneToMany(fetch=FetchType.LAZY, cascade={CascadeType.REMOVE}, orphanRemoval = true)
+  @JoinColumns({@JoinColumn(name="picture_id", referencedColumnName="id", updatable = false)})
   private Set<PictureVote> votes;
-  @OneToMany(fetch=FetchType.LAZY, cascade={CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-  @JoinColumns({@JoinColumn(name="picture_id", referencedColumnName="id")})
+  @OneToMany(fetch=FetchType.LAZY, cascade={CascadeType.REMOVE}, orphanRemoval = true)
+  @JoinColumns({@JoinColumn(name="picture_id", referencedColumnName="id", updatable = false)})
   @Where(clause="positive = 0")
   private Set<PictureVote> negatives;
   

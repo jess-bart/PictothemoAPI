@@ -81,7 +81,7 @@ public class UserDao
       throw new PictothemoError(ErrorCode.MISSING_PARAMETER, getMessage("error.missing_parameter"), HttpStatus.UNAUTHORIZED);
     }
     try {
-      String queryString = "Select u FROM User u WHERE u.accessToken = :token";
+    	String queryString = "Select u FROM User u WHERE u.accessToken = :token";
       
       TypedQuery<entity.User> query = session.createQuery(queryString, entity.User.class);
       query.setParameter("token", token);
@@ -106,6 +106,7 @@ public class UserDao
     
     if ((request.getHeader("pseudo") == null) || (request.getHeader("password") == null))
       throw new PictothemoError(ErrorCode.MISSING_PARAMETER, getMessage("error.missing_parameter"));
+    
     String pseudo = request.getHeader("pseudo");
     String password = request.getHeader("password");
     
@@ -123,9 +124,9 @@ public class UserDao
       TypedQuery<entity.User> query = session.createQuery(queryString, entity.User.class);
       query.setParameter("pseudo", pseudo);
       query.setParameter("password", password);
-      if (!useSalt) {
-        query.setParameter("salt", SALT);
-      }
+      if (!useSalt)
+      	query.setParameter("salt", SALT);
+      
       entity.User user = (entity.User)query.getSingleResult();
       String accessToken = UUID.randomUUID().toString();
       user.setAccessToken(accessToken);

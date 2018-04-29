@@ -13,12 +13,15 @@
     <cache
         name="org.hibernate.cache.StandardQueryCache"
         maxEntriesLocalHeap="5"
+        overflowToDisk="false"
         eternal="false"
         timeToLiveSeconds="120">
         <persistence strategy="localTempSwap"/>
     </cache>
     <cache name="org.hibernate.cache.spi.UpdateTimestampsCache"
-           maxEntriesLocalHeap="5000" eternal="true">
+           maxEntriesLocalHeap="5000"
+           eternal="true"
+           overflowToDisk="false">
         <persistence strategy="localTempSwap"/>
     </cache>
 </ehcache>
