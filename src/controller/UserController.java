@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import dao.UserDao;
+import entity.SimpleResponse;
 import exception.PictothemoError;
 
 @RestController
@@ -75,5 +76,13 @@ public class UserController
   {
     this.dao.updateUser(request, user);
     return new ResponseEntity<entity.User>(user, HttpStatus.OK);
+  }
+  
+  
+  @RequestMapping(method={RequestMethod.DELETE})
+  public ResponseEntity<SimpleResponse> deleteUser(HttpServletRequest request, @RequestHeader String password) throws PictothemoError {
+    dao.deleteUser(request, password);
+    SimpleResponse response = new SimpleResponse(true);
+    return new ResponseEntity<SimpleResponse>(response, HttpStatus.OK);
   }
 }

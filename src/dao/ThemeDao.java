@@ -139,7 +139,9 @@ public class ThemeDao
       query.where(new Predicate[] { builder.equal(themeRoot.get("candidateDate"), date), builder.equal(themeRoot.get("won"), Boolean.valueOf(true)) });
       query.distinct(true);
       result = (Theme)session.createQuery(query).setMaxResults(1).getSingleResult();
-    } catch (NoResultException e) {
+    } catch (Exception e) {
+    	System.out.println("JBA  ERROR : "+e.getMessage());
+    	
       throw new PictothemoError(ErrorCode.ENTITY_NOT_FOUND, getMessage("error.entity_not_found"));
     } finally {
       session.close();

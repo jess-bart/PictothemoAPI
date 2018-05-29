@@ -17,6 +17,8 @@ import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 
+import entity.Picture;
+import entity.User;
 import enumeration.ErrorCode;
 import exception.PictothemoError;
 
@@ -90,7 +92,7 @@ public class UserDao
       if (user.getExpiresToken().before(Calendar.getInstance().getTime()))
         throw new PictothemoError(ErrorCode.EXPIRED_TOKEN, getMessage("error.expired_token"), HttpStatus.FORBIDDEN);
     } catch (NoResultException e) {
-      throw new PictothemoError(ErrorCode.AUTH_FAILED, getMessage("error.auth_fail"));
+      throw new PictothemoError(ErrorCode.AUTH_FAILED, getMessage("error.auth_fail"), HttpStatus.FORBIDDEN);
     } finally {
       session.close();
     }
@@ -196,6 +198,26 @@ public class UserDao
     }
     
     return dbUser;
+  }
+  
+  public void deleteUser(HttpServletRequest request, String password) throws PictothemoError{
+  	Session session = sessionFactory.openSession();
+    Transaction tx = session.beginTransaction();
+    try {
+      User user = this.checkToken(request);
+      
+      String computedPassword = convertToMD5(password + user.getSalt()).toUpperCase();
+      computedPassword = convertToSha512(computedPassword + SALT).toUpperCase();
+      
+      if(!user.getPassword().equals(computedPassword))
+      	throw new PictothemoError(ErrorCode.AUTH_FAILED, getMessage("error.auth_fail"), HttpStatus.FORBIDDEN);
+      
+      session.remove(user);
+      tx.commit();
+    }
+  	finally {
+	    session.close();
+	  }
   }
   
   private Date getExpiresToken() {

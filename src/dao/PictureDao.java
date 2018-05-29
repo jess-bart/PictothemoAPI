@@ -1,9 +1,13 @@
 package dao;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Calendar;
@@ -20,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -169,8 +174,11 @@ public class PictureDao extends BaseDao
       dao.setMessageSource(messageSource);
       User user = dao.checkToken(request);
       
-      String queryString = "INSERT INTO PictureVote(user_id, picture_id, positive) VALUES(:user, :picture, :positive) ON DUPLICATE KEY UPDATE positive = :positive";
+      Picture picture = this.getPictureById(session, id);
+      if(picture.getUser().getId() == user.getId())
+      	throw new PictothemoError(ErrorCode.UNAUTHORIZED, getMessage("error.unauthorized"), HttpStatus.UNAUTHORIZED);
       
+      String queryString = "INSERT INTO PictureVote(user_id, picture_id, positive) VALUES(:user, :picture, :positive) ON DUPLICATE KEY UPDATE positive = :positive";
 
       Query query = session.createNativeQuery(queryString);
       query.setParameter("user", Long.valueOf(user.getId()));
@@ -189,8 +197,8 @@ public class PictureDao extends BaseDao
   }
   
   public void uploadPicture(HttpServletRequest request, HttpServletResponse response, MultipartFile file) throws PictothemoError
-  {
-    UserDao userDao = new UserDao();
+  {    
+  	UserDao userDao = new UserDao();
     userDao.setMessageSource(messageSource);
     User user = userDao.checkToken(request);
     
@@ -199,14 +207,17 @@ public class PictureDao extends BaseDao
       throw new PictothemoError(ErrorCode.UNSUPPORTED_FORMAT, getMessage("error.format_not_allowed"));
     if (file.getSize() > 41943040L)
       throw new PictothemoError(ErrorCode.FILE_TOO_BIG, getMessage("error.file_too_big"));
+    if (file.getSize() == 0 )
+      throw new PictothemoError(ErrorCode.EMPTY_FILE, getMessage("error.empty_file"));
     
     Session session = sessionFactory.openSession();
     Transaction tx = session.beginTransaction();
+  	
     try
     {
       Calendar tomorrow = Calendar.getInstance();
       tomorrow.add(Calendar.DATE, 1);
-      tomorrow.set(Calendar.HOUR, 0);
+      tomorrow.set(Calendar.HOUR_OF_DAY, 0);
       tomorrow.set(Calendar.MINUTE, 0);
       tomorrow.set(Calendar.SECOND, 0);
       tomorrow.set(Calendar.MILLISECOND, 0);
@@ -225,13 +236,19 @@ public class PictureDao extends BaseDao
       picture.setTheme(theme);
       
       session.persist(picture);
-      
       String fileName = picture.getId() + file.getOriginalFilename().substring(extIndex);
-      file.transferTo(new File(uploadPath, fileName));
       
+      FileOutputStream fos = new FileOutputStream(new File(uploadPath, fileName));
+      BufferedOutputStream outputStream = new BufferedOutputStream(fos);
+  
+	    outputStream.write(file.getBytes());
+	    outputStream.flush();
+	    outputStream.close();
+       
       tx.commit();
-    } catch (IOException|IllegalStateException e) {
-      tx.rollback();
+      session.close();
+    } catch (Exception e) {
+    	tx.rollback();
       throw new PictothemoError(ErrorCode.UPLOAD_ERROR, getMessage("error.unknown"));
     } finally {
       session.close();
@@ -239,7 +256,7 @@ public class PictureDao extends BaseDao
   }
   
   public void downloadPicture(HttpServletResponse response, long id) throws PictothemoError {
-    if (id < 0L) {
+  	if (id < 0L) {
       return;
     }
     File upload = new File(uploadPath);
@@ -370,6 +387,26 @@ public class PictureDao extends BaseDao
     Session session = sessionFactory.openSession();
     Transaction tx = session.beginTransaction();
     try {
+      File directory = new File(uploadPath);
+      File[] files = directory.listFiles();
+      
+      String[] filename = null;
+      Picture comparison = new Picture();
+      
+      try {
+      	for (int i = files.length - 1; i >= 0; i--) {
+          filename = files[i].getName().split("\\.");
+          if ((filename != null) && (filename.length > 0)) {
+            comparison.setId(Long.valueOf(filename[0]).longValue());
+            
+            if (pictures.contains(comparison)) {
+              files[i].delete();
+            }
+          }
+        }
+      }catch (Exception ignore) {}
+      
+      
       String queryString = "DELETE p FROM Picture p LEFT JOIN Theme t ON p.theme_id = t.id AND t.won = 1 WHERE t.candidate_date = :candidate_date AND p.user_id = :user";
       
       Query query = session.createNativeQuery(queryString);
@@ -378,25 +415,8 @@ public class PictureDao extends BaseDao
       query.executeUpdate();
       
       tx.commit();
-      
-      File directory = new File(uploadPath);
-      File[] files = directory.listFiles();
-      
-      String[] filename = null;
-      Picture comparison = new Picture();
-      
-      for (int i = files.length - 1; i >= 0; i--) {
-        filename = files[i].getName().split("\\.");
-        if ((filename != null) && (filename.length > 0)) {
-          comparison.setId(Long.valueOf(filename[0]).longValue());
-          
-          if (pictures.contains(comparison)) {
-            files[i].delete();
-          }
-        }
-      }
     } catch (Exception e) {
-      tx.rollback();
+    	tx.rollback();
     }
     finally {
       session.close();

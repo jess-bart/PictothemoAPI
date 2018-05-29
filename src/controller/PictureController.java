@@ -44,14 +44,14 @@ public class PictureController
     dao.setMessageSource(messageSource);
   }
   
-  @RequestMapping(method={org.springframework.web.bind.annotation.RequestMethod.GET}, value={"/{date}"})
+  @RequestMapping(method={RequestMethod.GET}, value={"/{date}"})
   public ResponseEntity<Picture> getPictureById(HttpServletRequest request, @PathVariable long date) throws PictothemoError {
     Picture picture = dao.getPictureById(null, date);
     return new ResponseEntity<Picture> (picture, HttpStatus.OK);
   }
 
 
-  @RequestMapping(method={org.springframework.web.bind.annotation.RequestMethod.GET})
+  @RequestMapping(method={RequestMethod.GET})
   public ResponseEntity<List<Picture>> getPictures(@DateTimeFormat(iso=DateTimeFormat.ISO.DATE) @RequestParam(value="startingDate", required=false) Date startingDate, @DateTimeFormat(iso=DateTimeFormat.ISO.DATE) @RequestParam(value="endingDate", required=false) Date endingDate, @RequestParam(value="user", required=false) String user, @RequestParam(value="theme", required=false) String theme, @RequestParam(value="potd", required=false) Boolean potd, @RequestParam(value="voteCount", required=false) Integer vote)
     throws PictothemoError
   {
@@ -88,8 +88,8 @@ public class PictureController
   
   @RequestMapping(method={RequestMethod.POST}, value={"/content"})
   public ResponseEntity<SimpleResponse> uploadPicture(HttpServletRequest request, HttpServletResponse response, @RequestParam("picture") MultipartFile file) throws PictothemoError {
-    dao.uploadPicture(request, response, file);
-    SimpleResponse simpleResponse = new SimpleResponse(true);
+  	dao.uploadPicture(request, response, file);
+  	SimpleResponse simpleResponse = new SimpleResponse(true);
     return new ResponseEntity<SimpleResponse>(simpleResponse, HttpStatus.OK);
   }
   
